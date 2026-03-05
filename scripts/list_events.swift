@@ -36,6 +36,28 @@ guard let startDate = isoFormatter.date(from: args[1]),
     exit(1)
 }
 
+// Request calendar access (macOS 14+ uses requestFullAccessToEvents)
+let semaphore = DispatchSemaphore(value: 0)
+var accessGranted = false
+
+if #available(macOS 14.0, *) {
+    store.requestFullAccessToEvents { granted, error in
+        accessGranted = granted
+        semaphore.signal()
+    }
+} else {
+    store.requestAccess(to: .event) { granted, error in
+        accessGranted = granted
+        semaphore.signal()
+    }
+}
+semaphore.wait()
+
+guard accessGranted else {
+    print("{\"events\": [], \"error\": \"Calendar access denied\"}")
+    exit(0)
+}
+
 // Fetch events
 let calendars = store.calendars(for: .event) // All calendars
 let predicate = store.predicateForEvents(withStart: startDate, end: endDate, calendars: nil)

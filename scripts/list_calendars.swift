@@ -16,7 +16,29 @@ struct Output: Codable {
 }
 
 let store = EKEventStore()
-// In a CLI script, access is often inherited or prompted. We assume access or fail gracefully.
+
+// Request calendar access (macOS 14+ uses requestFullAccessToEvents)
+let semaphore = DispatchSemaphore(value: 0)
+var accessGranted = false
+
+if #available(macOS 14.0, *) {
+    store.requestFullAccessToEvents { granted, error in
+        accessGranted = granted
+        semaphore.signal()
+    }
+} else {
+    store.requestAccess(to: .event) { granted, error in
+        accessGranted = granted
+        semaphore.signal()
+    }
+}
+semaphore.wait()
+
+guard accessGranted else {
+    print("{\"calendars\": [], \"error\": \"Calendar access denied\"}")
+    exit(0)
+}
+
 let calendars = store.calendars(for: .event)
 
 var infos: [CalendarInfo] = []

@@ -26,13 +26,17 @@ fi
 
 chmod +x "$SCRIPT_DIR/calendar_clean_notify.sh" "$SCRIPT_DIR/calendar_clean.py" "$SCRIPT_DIR/upsert_event.py" "$SCRIPT_DIR/env_check.py" "$SCRIPT_DIR/regression_test.py"
 
-/usr/bin/python3 "$SCRIPT_DIR/env_check.py" >/tmp/mca_env_check.json
+TMPENV=$(mktemp /tmp/mca_env_check_XXXXXX)
+trap 'rm -f "$TMPENV" "$TMPCRON"' EXIT
+
+/usr/bin/python3 "$SCRIPT_DIR/env_check.py" >"$TMPENV"
 
 echo "Environment check passed."
 
-( crontab -l 2>/dev/null || true ) | sed '/calendar_clean_notify.sh/d' > /tmp/macos_calendar_assistant_cron
+TMPCRON=$(mktemp /tmp/mca_cron_XXXXXX)
+( crontab -l 2>/dev/null || true ) | sed '/calendar_clean_notify.sh/d' > "$TMPCRON"
 
-echo "$MIN $HOUR * * * CAL_SKILL_CONFIG=$CONFIG_PATH $SCRIPT_DIR/calendar_clean_notify.sh" >> /tmp/macos_calendar_assistant_cron
-crontab /tmp/macos_calendar_assistant_cron
+echo "$MIN $HOUR * * * CAL_SKILL_CONFIG=$CONFIG_PATH $SCRIPT_DIR/calendar_clean_notify.sh" >> "$TMPCRON"
+crontab "$TMPCRON"
 
 echo "Installed cron: $MIN $HOUR * * * calendar_clean_notify.sh"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -24,9 +25,28 @@ def load_config() -> dict:
         return {}
 
 
+def _system_timezone() -> str | None:
+    """Detect macOS system timezone via systemsetup."""
+    try:
+        out = subprocess.check_output(
+            ["/usr/sbin/systemsetup", "-gettimezone"],
+            text=True, timeout=5, stderr=subprocess.DEVNULL,
+        )
+        # Output: "Time Zone: Asia/Shanghai"
+        tz = out.strip().split(":", 1)[-1].strip()
+        ZoneInfo(tz)  # validate
+        return tz
+    except Exception:
+        return None
+
+
 def get_timezone_name(default: str = "Asia/Shanghai") -> str:
     cfg = load_config()
-    return str(cfg.get("timezone", default))
+    tz = cfg.get("timezone")
+    if tz:
+        return str(tz)
+    # No timezone in config → try system timezone, then fall back to default
+    return _system_timezone() or default
 
 
 def get_zoneinfo(default: str = "Asia/Shanghai") -> ZoneInfo:
