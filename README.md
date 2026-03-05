@@ -1,188 +1,62 @@
 # macos-calendar-assistant
 
-> Turn planning, execution, and daily review into one continuous calendar workflow.
+> 我用这个 Skill，把「周计划 → 每日执行 → 每日总结 → 日程调整」做成一个闭环。
 
-English | [中文](#中文)
-
----
-
-## English
-
-## Why this skill exists
-Most calendar tools stop at "add event." They do not help you close the loop between:
-- weekly planning,
-- daily execution,
-- daily summary,
-- next-day / next-week adjustment.
-
-This skill is built for that loop.
-
-## Who this is for
-Especially useful for:
-1. **One Person Company (OPC)** founders
-2. People with strong planning / schedule management needs
-
-If your work changes fast and plans need constant adjustment, this skill helps keep your calendar clean, current, and actionable.
-
-## User story (real-world workflow)
-A typical user (like Bryant):
-1. Writes a weekly plan every Monday
-2. Uses OpenClaw + AI to break it into concrete calendar blocks
-3. Writes a daily summary at the end of each day
-4. Runs a daily review to adjust tomorrow and rebalance the rest of the week
-
-With this skill, planning + summary + schedule sync happen in one system, with full traceability.
-You no longer need to manually juggle multiple tools for daily planning maintenance.
-
-## What problems it solves
-- Duplicate events from repeated AI/tool calls
-- Plans drifting away from real execution
-- Daily review not reflected back into calendar
-- Hard-to-maintain weekly adjustments
-
-## OpenClaw + IM integration
-This skill works especially well as a calendar execution layer behind OpenClaw.
-You can manage schedules directly from IM conversations (Telegram / Discord / Feishu / iMessage / Slack, etc.) instead of manually opening Calendar every time.
-
-### Screenshot-to-Schedule scenario
-- Forward a screenshot (group notice, event poster, booking page, chat screenshot)
-- OpenClaw extracts time/location/context
-- This skill upserts the event (no duplicate spam)
-- You refine in chat: "extend to 14:00", "move to Friday night", "add 30-min reminder"
-
-## Visual workflow
-```mermaid
-flowchart LR
-  A[Weekly Plan] --> B[OpenClaw parsing]
-  B --> C[macos-calendar-assistant upsert]
-  C --> D[Calendar blocks]
-  D --> E[Daily execution]
-  E --> F[Daily summary]
-  F --> G[Daily review]
-  G --> H[Adjust next-day/next-week schedule]
-  H --> C
-```
-
-```mermaid
-sequenceDiagram
-  participant U as User (IM)
-  participant IM as Telegram/Discord/Feishu
-  participant OC as OpenClaw
-  participant SK as Calendar Skill
-  participant CAL as macOS Calendar
-
-  U->>IM: Forward screenshot / send text
-  IM->>OC: Message + image
-  OC->>OC: Extract time/location/context
-  OC->>SK: upsert_event(...)
-  SK->>CAL: Create/Update event (idempotent)
-  CAL-->>OC: CREATED/UPDATED/SKIPPED
-  OC-->>U: Confirmation in chat
-```
-
-```mermaid
-flowchart TD
-  A[Run duplicate scan] --> B{delete_candidates > 0?}
-  B -- No --> C[Done]
-  B -- Yes --> D[Generate snapshot-out plan]
-  D --> E[Manual review]
-  E --> F{Apply?}
-  F -- No --> C
-  F -- Yes --> G[--apply --confirm yes]
-  G --> H[Deletion result + log]
-```
-
-## Key capabilities
-- Idempotent event write (`CREATED` / `UPDATED` / `SKIPPED`)
-- Calendar/event listing for conflict checks
-- Alarm updates by UID
-- Duplicate detection + safe cleanup
-- Daily duplicate-check reminder via cron
-
-## Requirements
-- macOS
-- Python 3.9+
-- Swift (Xcode Command Line Tools)
-- Calendar permission granted to terminal/host process
-
-## Quick start
-```bash
-cd scripts
-./install.sh
-```
-
-## Typical daily usage
-```bash
-# 1) Environment check
-python3 scripts/env_check.py
-
-# 2) Upsert plan blocks (safe, no accidental duplicates)
-python3 scripts/upsert_event.py \
-  --title "Deep work: Product positioning" \
-  --start "2026-03-06T10:00:00+08:00" \
-  --end "2026-03-06T11:30:00+08:00" \
-  --calendar "产品" \
-  --notes "Weekly goal alignment" \
-  --alarm-minutes 15
-
-# 3) End-of-day check for calendar hygiene
-python3 scripts/calendar_clean.py --start "2026-03-01T00:00:00+08:00" --end "2026-03-08T23:59:59+08:00"
-
-# 4) Apply cleanup only when reviewed (double confirmation)
-python3 scripts/calendar_clean.py --start "..." --end "..." --apply --confirm yes --snapshot-out ./delete-plan.json
-```
-
-## Validation
-```bash
-scripts/smoke_test.sh
-python3 scripts/regression_test.py
-```
-
-## Uninstall
-```bash
-cd scripts
-./uninstall.sh
-```
+中文 | [English](#english)
 
 ---
 
 ## 中文
 
-## 这个 Skill 解决什么问题
-大多数日历工具只负责“加事件”，但不负责把下面这条链路串起来：
-- 周计划
-- 每日执行
-- 每日总结
-- 复盘后对后续计划的修正
+## 我为什么做这个 Skill
+这个 Skill 的背景是：我前段时间做过一个叫 **CalendarAI** 的客户端，已经验证了“调用 AI 做日程增删改查”这件事是可行的。
 
-这个 Skill 的核心就是把这条链路打通。
+我也系统研究过一批日程与智能排程产品，包括 **Toki / Calendly / Clockwise / Motion / Amie** 等。
+它们分别在对话交互、约会链接、团队排程、自动重排与体验设计上给了我不同启发。
+这些研究给了我一个很明确的结论：
+真正高频、自然、可持续的日程管理，不只是“能建事件”，而是要把管理动作放进用户每天已经在用的沟通场景里。
 
-## 适合谁
-特别适合：
-1. **一人公司（OPC）**
-2. 有明确计划习惯、日程管理需求强的人
+所以在我开始重度使用 OpenClaw 后，我更确认了一点：
+**直接在 IM 对话里管理日程，再同步到系统日历**，比单独做一个客户端更 agentic-friendly，也更 human-friendly。
 
-如果你的工作节奏变化快、计划需要天天微调，这个 Skill 会很有价值。
+我最终做这个 `macos-calendar-assistant`，就是为了把这条链路打通：
+- 周计划怎么落地到每天
+- 每天执行后怎么复盘
+- 复盘结果怎么回写到后续日程
 
-## 用户故事（按你的场景）
-以你这样的用户为例：
-1. 每周写周计划
-2. 用 OpenClaw 让 AI 把周计划拆成可执行日程
+让日程不只是记录，而是持续迭代的执行系统。
+
+## 我主要怎么用
+我自己的典型工作流：
+1. 每周先写周计划
+2. 用 OpenClaw + AI 把计划拆成可执行时间块
 3. 每天结束写总结
-4. 做每日复盘，并把复盘结果同步到后续日程
+4. 根据复盘结果直接调整后续日程
 
-这样就能形成“计划—执行—总结—修正”的闭环，并且全过程可追踪。
-不再需要在多个工具之间手动同步。
+这样可以形成“计划—执行—总结—修正”的闭环。
 
-## OpenClaw + IM 集成
-这个 Skill 非常适合作为 OpenClaw 背后的日历执行层。
-你可以直接在 IM 对话里管理日程（Telegram / Discord / Feishu / iMessage / Slack 等），不用每次手动打开 Calendar。
+## 我把它接到 IM 里怎么用
+这个 Skill 可以配合 OpenClaw 直接接入 IM（Telegram / Discord / Feishu / iMessage / Slack 等）。
+我可以在聊天里直接说“加个日程”“延长到14:00”“改到周五晚上”，不需要来回切 App。
 
-### 截图转日程（Screenshot-to-Schedule）
-- 转发截图（群通知、活动海报、预约页面、聊天截图）
-- OpenClaw 提取时间/地点/上下文
-- 该 Skill 幂等写入日历（不重复刷事件）
-- 你在聊天里继续调整："延长到14:00"、"改到周五晚上"、"提前30分钟提醒"
+### 截图转日程（我最常用）
+我会直接转发截图（群通知、活动海报、聊天截图、预约页面等）：
+1. OpenClaw 先识别时间/地点/上下文
+2. Skill 幂等写入 Calendar（避免重复）
+3. 我在聊天里继续微调（时间、地点、提醒）
+
+## 我解决了哪些痛点
+- AI 重复写入导致的日历污染
+- 计划和真实执行脱节
+- 每日复盘无法同步到后续安排
+- 一周内频繁调整成本高
+
+## 核心能力
+- 幂等写入（`CREATED` / `UPDATED` / `SKIPPED`）
+- 日历/事件读取（冲突检查）
+- 按 UID 设置提醒
+- 重复检测与安全清理（`--apply --confirm yes`）
+- 每日自动检查（cron）
 
 ## 可视化流程
 ```mermaid
@@ -199,7 +73,7 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-  participant U as 用户(IM)
+  participant U as 我(IM)
   participant IM as Telegram/Discord/Feishu
   participant OC as OpenClaw
   participant SK as Calendar Skill
@@ -226,13 +100,6 @@ flowchart TD
   G --> H[输出删除结果与日志]
 ```
 
-## 核心能力
-- 幂等写入（`CREATED` / `UPDATED` / `SKIPPED`）避免重复添加
-- 日历/事件读取（冲突检查）
-- 通过 UID 更新提醒
-- 重复事件检测与安全清理
-- 每日自动检查（cron 提醒）
-
 ## 环境要求
 - macOS
 - Python 3.9+
@@ -245,12 +112,12 @@ cd scripts
 ./install.sh
 ```
 
-## 日常使用示例
+## 常用命令
 ```bash
-# 1) 环境自检
+# 环境自检
 python3 scripts/env_check.py
 
-# 2) 幂等写入计划（避免重复）
+# 幂等创建/更新
 python3 scripts/upsert_event.py \
   --title "深度工作：产品定位" \
   --start "2026-03-06T10:00:00+08:00" \
@@ -259,10 +126,10 @@ python3 scripts/upsert_event.py \
   --notes "与周目标对齐" \
   --alarm-minutes 15
 
-# 3) 每日复盘前检查日程卫生
+# 重复扫描（仅检查）
 python3 scripts/calendar_clean.py --start "2026-03-01T00:00:00+08:00" --end "2026-03-08T23:59:59+08:00"
 
-# 4) 审核后再清理（双保险）
+# 重复清理（双保险）
 python3 scripts/calendar_clean.py --start "..." --end "..." --apply --confirm yes --snapshot-out ./delete-plan.json
 ```
 
@@ -276,4 +143,36 @@ python3 scripts/regression_test.py
 ```bash
 cd scripts
 ./uninstall.sh
+```
+
+---
+
+## English
+
+This skill is my calendar execution layer for OpenClaw.
+I use it to keep a tight loop between weekly planning, daily execution, daily summary, and schedule adjustments.
+
+### What it helps me do
+- Write/update events idempotently (`CREATED` / `UPDATED` / `SKIPPED`)
+- Detect conflicts and duplicates
+- Clean duplicates safely with explicit confirmation
+- Operate from chat workflows (including screenshot-to-schedule)
+
+### Typical flow
+1. I create a weekly plan.
+2. OpenClaw turns it into calendar blocks.
+3. I run daily summaries and reviews.
+4. I adjust upcoming blocks in chat.
+
+### Setup
+```bash
+cd scripts
+./install.sh
+```
+
+### Common commands
+```bash
+python3 scripts/env_check.py
+scripts/smoke_test.sh
+python3 scripts/regression_test.py
 ```
