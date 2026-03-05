@@ -98,6 +98,28 @@ scripts/install.sh     # run env check + install cron from config.json
 scripts/uninstall.sh   # remove cron
 ```
 
+## Extraction & scheduling heuristics (from real usage)
+
+1. **Speaker ownership from chat screenshots**
+   - Treat the user's message bubble as primary intent.
+   - Treat counterpart bubbles as constraints (availability/travel window), not direct auto-create tasks.
+
+2. **Conflict policy**
+   - If user explicitly says "cover/override" (`覆盖`), allow replacing existing slot and reschedule the displaced event.
+   - If not explicit, warn and ask for choice before overwriting.
+
+3. **Time-window intent parsing**
+   - Phrases like "4-6点给对方" should first be interpreted as an availability window.
+   - Convert to a formal event only after user confirmation.
+
+4. **Reschedule priority**
+   - Prefer moving flexible events (workouts/optional blocks) before strategic P0 work blocks.
+   - Do not auto-move P0 items unless user explicitly requests.
+
+5. **Confirmation prompt template**
+   - Use: "I identified X as your intent and Y as counterpart constraints. I will apply Z. Confirm?"
+   - Keep it short; avoid over-confirming when intent is explicit.
+
 ## Constraints
 
 - macOS only (EventKit + Calendar permission required)
