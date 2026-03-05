@@ -8,7 +8,7 @@ Goal: keep one local, stable skill for daily use before any public release work.
 ## Current convergence status
 - [x] `within_2h.py` merged into canonical skill
 - [x] HEARTBEAT uses canonical path
-- [x] Old `skills/macos-calendar/within_2h.py` replaced with compatibility wrapper
+- [x] Legacy folder moved to `skills/macos-calendar-legacy-backup` for rollback safety
 - [x] Daily cleanup cron uses canonical notify script
 - [x] Smoke test passes
 - [x] Regression test passes
