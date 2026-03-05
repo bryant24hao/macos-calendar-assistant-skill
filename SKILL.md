@@ -80,6 +80,11 @@ python3 scripts/calendar_clean.py --start "2026-03-01T00:00:00+08:00" --end "202
 python3 scripts/calendar_clean.py --start "..." --end "..." --apply --confirm yes --snapshot-out ./delete-plan.json
 ```
 
+### Upcoming events (within 2 hours)
+```bash
+python3 scripts/within_2h.py
+```
+
 ### Environment + tests
 ```bash
 python3 scripts/env_check.py

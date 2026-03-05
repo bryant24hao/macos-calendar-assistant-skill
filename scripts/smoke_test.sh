@@ -3,6 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+cleanup() { rm -f /tmp/mca_calendars.json /tmp/mca_events.json /tmp/mca_clean.json /tmp/mca_upsert.txt; }
+trap cleanup EXIT
+
 VALS=(${(s: :)$(python3 - <<'PY' "$SCRIPT_DIR"
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
