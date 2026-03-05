@@ -149,30 +149,140 @@ cd scripts
 
 ## English
 
-This skill is my calendar execution layer for OpenClaw.
-I use it to keep a tight loop between weekly planning, daily execution, daily summary, and schedule adjustments.
+## Why I built this skill
+Before this, I built a client app called **CalendarAI**. It proved that AI-powered calendar CRUD is feasible.
 
-### What it helps me do
-- Write/update events idempotently (`CREATED` / `UPDATED` / `SKIPPED`)
-- Detect conflicts and duplicates
-- Clean duplicates safely with explicit confirmation
-- Operate from chat workflows (including screenshot-to-schedule)
+I also studied a range of scheduling products, including **Toki / Calendly / Clockwise / Motion / Amie**.
+Each gave me useful ideas across conversational UX, booking links, team scheduling, auto-rescheduling, and product design.
 
-### Typical flow
-1. I create a weekly plan.
-2. OpenClaw turns it into calendar blocks.
-3. I run daily summaries and reviews.
-4. I adjust upcoming blocks in chat.
+My conclusion was clear:
+high-frequency, natural scheduling is not just about "creating events" — it needs to happen inside the communication tools people already use daily.
 
-### Setup
+After heavily using OpenClaw, I became even more certain:
+**managing schedules directly in IM conversations, then syncing into system calendar** is more agentic-friendly and more human-friendly than relying on a standalone client.
+
+I built `macos-calendar-assistant` to close this loop:
+- how weekly plans become daily blocks,
+- how daily execution gets reviewed,
+- and how review outcomes sync back into upcoming schedules.
+
+So calendar is not just a record — it becomes an iterative execution system.
+
+## How I use it
+My typical workflow:
+1. Create a weekly plan.
+2. Use OpenClaw + AI to break it into executable time blocks.
+3. Write a daily summary at the end of the day.
+4. Adjust upcoming schedules directly from review results.
+
+This creates a full loop: **plan → execute → summarize → adjust**.
+
+## How I use it with IM
+This skill works with OpenClaw across IM channels (Telegram / Discord / Feishu / iMessage / Slack).
+I can say things like "add this event", "extend to 14:00", or "move to Friday night" in chat, without app switching.
+
+### Screenshot-to-schedule (my most common pattern)
+I often forward screenshots (group notices, posters, chat screenshots, booking pages):
+1. OpenClaw extracts time, location, and context.
+2. The skill writes/upserts to Calendar idempotently (no duplicate spam).
+3. I refine details in chat (time, location, reminders).
+
+## Problems this solves for me
+- Calendar pollution from repeated AI writes
+- Drift between plan and real execution
+- Review insights not reflected into future schedule
+- High adjustment cost within the same week
+
+## Core capabilities
+- Idempotent write (`CREATED` / `UPDATED` / `SKIPPED`)
+- Calendar/event reads for conflict checks
+- UID-based alarm updates
+- Duplicate detection with safe cleanup (`--apply --confirm yes`)
+- Daily automatic checks (cron)
+
+## Visual workflow
+```mermaid
+flowchart LR
+  A[Weekly Plan] --> B[OpenClaw parsing]
+  B --> C[Calendar Skill idempotent upsert]
+  C --> D[Calendar time blocks]
+  D --> E[Daily execution]
+  E --> F[Daily summary]
+  F --> G[Daily review]
+  G --> H[Adjust tomorrow/rest-of-week schedule]
+  H --> C
+```
+
+```mermaid
+sequenceDiagram
+  participant U as Me (IM)
+  participant IM as Telegram/Discord/Feishu
+  participant OC as OpenClaw
+  participant SK as Calendar Skill
+  participant CAL as macOS Calendar
+
+  U->>IM: Forward screenshot / send text
+  IM->>OC: Message + image
+  OC->>OC: Extract time/location/context
+  OC->>SK: upsert_event(...)
+  SK->>CAL: Idempotent create/update
+  CAL-->>OC: CREATED/UPDATED/SKIPPED
+  OC-->>U: Confirmation in chat
+```
+
+```mermaid
+flowchart TD
+  A[Run duplicate scan] --> B{delete_candidates > 0?}
+  B -- No --> C[Done]
+  B -- Yes --> D[Generate snapshot delete plan]
+  D --> E[Manual review]
+  E --> F{Apply deletion?}
+  F -- No --> C
+  F -- Yes --> G[--apply --confirm yes]
+  G --> H[Deletion result + log]
+```
+
+## Requirements
+- macOS
+- Python 3.9+
+- Swift (Xcode Command Line Tools)
+- Calendar permission granted to terminal/host process
+
+## Quick start
 ```bash
 cd scripts
 ./install.sh
 ```
 
-### Common commands
+## Common commands
 ```bash
+# Environment check
 python3 scripts/env_check.py
+
+# Idempotent create/update
+python3 scripts/upsert_event.py \
+  --title "Deep work: Product positioning" \
+  --start "2026-03-06T10:00:00+08:00" \
+  --end "2026-03-06T11:30:00+08:00" \
+  --calendar "产品" \
+  --notes "Aligned with weekly goals" \
+  --alarm-minutes 15
+
+# Duplicate scan (read-only)
+python3 scripts/calendar_clean.py --start "2026-03-01T00:00:00+08:00" --end "2026-03-08T23:59:59+08:00"
+
+# Duplicate cleanup (double confirmation)
+python3 scripts/calendar_clean.py --start "..." --end "..." --apply --confirm yes --snapshot-out ./delete-plan.json
+```
+
+## Tests
+```bash
 scripts/smoke_test.sh
 python3 scripts/regression_test.py
+```
+
+## Uninstall
+```bash
+cd scripts
+./uninstall.sh
 ```
