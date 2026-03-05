@@ -40,6 +40,58 @@ You no longer need to manually juggle multiple tools for daily planning maintena
 - Daily review not reflected back into calendar
 - Hard-to-maintain weekly adjustments
 
+## OpenClaw + IM integration
+This skill works especially well as a calendar execution layer behind OpenClaw.
+You can manage schedules directly from IM conversations (Telegram / Discord / Feishu / iMessage / Slack, etc.) instead of manually opening Calendar every time.
+
+### Screenshot-to-Schedule scenario
+- Forward a screenshot (group notice, event poster, booking page, chat screenshot)
+- OpenClaw extracts time/location/context
+- This skill upserts the event (no duplicate spam)
+- You refine in chat: "extend to 14:00", "move to Friday night", "add 30-min reminder"
+
+## Visual workflow
+```mermaid
+flowchart LR
+  A[Weekly Plan] --> B[OpenClaw parsing]
+  B --> C[macos-calendar-assistant upsert]
+  C --> D[Calendar blocks]
+  D --> E[Daily execution]
+  E --> F[Daily summary]
+  F --> G[Daily review]
+  G --> H[Adjust next-day/next-week schedule]
+  H --> C
+```
+
+```mermaid
+sequenceDiagram
+  participant U as User (IM)
+  participant IM as Telegram/Discord/Feishu
+  participant OC as OpenClaw
+  participant SK as Calendar Skill
+  participant CAL as macOS Calendar
+
+  U->>IM: Forward screenshot / send text
+  IM->>OC: Message + image
+  OC->>OC: Extract time/location/context
+  OC->>SK: upsert_event(...)
+  SK->>CAL: Create/Update event (idempotent)
+  CAL-->>OC: CREATED/UPDATED/SKIPPED
+  OC-->>U: Confirmation in chat
+```
+
+```mermaid
+flowchart TD
+  A[Run duplicate scan] --> B{delete_candidates > 0?}
+  B -- No --> C[Done]
+  B -- Yes --> D[Generate snapshot-out plan]
+  D --> E[Manual review]
+  E --> F{Apply?}
+  F -- No --> C
+  F -- Yes --> G[--apply --confirm yes]
+  G --> H[Deletion result + log]
+```
+
 ## Key capabilities
 - Idempotent event write (`CREATED` / `UPDATED` / `SKIPPED`)
 - Calendar/event listing for conflict checks
@@ -121,6 +173,58 @@ cd scripts
 
 这样就能形成“计划—执行—总结—修正”的闭环，并且全过程可追踪。
 不再需要在多个工具之间手动同步。
+
+## OpenClaw + IM 集成
+这个 Skill 非常适合作为 OpenClaw 背后的日历执行层。
+你可以直接在 IM 对话里管理日程（Telegram / Discord / Feishu / iMessage / Slack 等），不用每次手动打开 Calendar。
+
+### 截图转日程（Screenshot-to-Schedule）
+- 转发截图（群通知、活动海报、预约页面、聊天截图）
+- OpenClaw 提取时间/地点/上下文
+- 该 Skill 幂等写入日历（不重复刷事件）
+- 你在聊天里继续调整："延长到14:00"、"改到周五晚上"、"提前30分钟提醒"
+
+## 可视化流程
+```mermaid
+flowchart LR
+  A[周计划] --> B[OpenClaw 解析]
+  B --> C[Calendar Skill 幂等写入]
+  C --> D[日历时间块]
+  D --> E[每日执行]
+  E --> F[每日总结]
+  F --> G[每日复盘]
+  G --> H[调整明天/本周剩余安排]
+  H --> C
+```
+
+```mermaid
+sequenceDiagram
+  participant U as 用户(IM)
+  participant IM as Telegram/Discord/Feishu
+  participant OC as OpenClaw
+  participant SK as Calendar Skill
+  participant CAL as macOS Calendar
+
+  U->>IM: 转发截图/发送文字
+  IM->>OC: 消息 + 图片
+  OC->>OC: 提取时间地点上下文
+  OC->>SK: upsert_event(...)
+  SK->>CAL: 幂等创建/更新
+  CAL-->>OC: CREATED/UPDATED/SKIPPED
+  OC-->>U: 聊天内确认结果
+```
+
+```mermaid
+flowchart TD
+  A[运行重复扫描] --> B{delete_candidates > 0?}
+  B -- 否 --> C[结束]
+  B -- 是 --> D[生成 snapshot 删除计划]
+  D --> E[人工确认]
+  E --> F{是否执行删除}
+  F -- 否 --> C
+  F -- 是 --> G[--apply --confirm yes]
+  G --> H[输出删除结果与日志]
+```
 
 ## 核心能力
 - 幂等写入（`CREATED` / `UPDATED` / `SKIPPED`）避免重复添加
