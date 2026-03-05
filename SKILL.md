@@ -1,6 +1,6 @@
 ---
 name: macos-calendar-assistant
-description: Manage macOS Calendar.app events with deterministic scripts (list calendars/events, idempotent create-or-update, alarms, duplicate cleanup, and daily cleanup notifications). Use when asked to add/reschedule/edit calendar events, set reminders, review schedule conflicts, or clean duplicate events in Calendar.app.
+description: Manage macOS Calendar with OpenClaw in IM-first workflows (Telegram/Discord/Feishu/iMessage/Slack), including screenshot-to-schedule extraction, idempotent create/update, move/extend/reschedule, reminders, conflict checks, daily review sync, and duplicate cleanup. Use when users ask to add/edit/move/postpone events, parse schedule screenshots/chat messages, adjust weekly plan into daily execution, or keep calendar + review notes in sync (日程/行程/会议/约会/提醒/复盘/改期/延长/截图识别).
 ---
 
 # macos-calendar-assistant
