@@ -4,6 +4,7 @@ import Foundation
 
 // Define output structure
 struct EventInfo: Codable {
+    let uid: String
     let title: String
     let start: Double // Timestamp
     let end: Double   // Timestamp
@@ -44,6 +45,7 @@ var outputEvents: [EventInfo] = []
 
 for event in events {
     outputEvents.append(EventInfo(
+        uid: event.calendarItemIdentifier,
         title: event.title,
         start: event.startDate.timeIntervalSince1970,
         end: event.endDate.timeIntervalSince1970,

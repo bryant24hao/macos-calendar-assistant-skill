@@ -39,6 +39,8 @@ swift scripts/list_calendars.swift
 swift scripts/list_events.swift "2026-03-06T00:00:00+08:00" "2026-03-06T23:59:59+08:00"
 ```
 
+Output includes `uid` for follow-up alarm/edit operations.
+
 ### Idempotent create/update (recommended)
 ```bash
 python3 scripts/upsert_event.py \
@@ -64,6 +66,14 @@ python3 scripts/add_event.py --title "..." --start "..." --end "..."
 python3 scripts/set_alarm.py --uid "EVENT_UID" --alarm-minutes 15
 ```
 
+### Move event (legacy utility)
+```bash
+swift scripts/move_event.swift "Team sync" "工作" "2026-03-07T10:00:00+08:00" 60 --search-days 7
+# optional precise match:
+# --original-start "2026-03-06T10:00:00+08:00"
+```
+Prefer `upsert_event.py` for most rescheduling flows; use `move_event.swift` for direct title-based move when needed.
+
 ### Duplicate scan / cleanup
 ```bash
 python3 scripts/calendar_clean.py --start "2026-03-01T00:00:00+08:00" --end "2026-03-08T23:59:59+08:00"
@@ -86,5 +96,5 @@ scripts/uninstall.sh   # remove cron
 ## Constraints
 
 - macOS only (EventKit + Calendar permission required)
-- Default timezone: Asia/Shanghai when user does not specify
+- Default timezone comes from `config.json.timezone` (fallback Asia/Shanghai) when user does not specify
 - Use `--apply` only after reviewing dry-run output

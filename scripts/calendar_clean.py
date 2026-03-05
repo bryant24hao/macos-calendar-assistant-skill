@@ -6,6 +6,8 @@ import subprocess
 from pathlib import Path
 from collections import defaultdict
 
+from config_utils import load_config, get_zoneinfo
+
 
 def parse_iso(s: str) -> dt.datetime:
     d = dt.datetime.fromisoformat(s)
@@ -25,8 +27,12 @@ def norm_title(t: str) -> str:
     return " ".join((t or "").strip().lower().split())
 
 
+TZ = get_zoneinfo()
+CFG = load_config()
+
+
 def ts_to_iso(ts: int) -> str:
-    return dt.datetime.fromtimestamp(ts, dt.timezone(dt.timedelta(hours=8))).isoformat()
+    return dt.datetime.fromtimestamp(ts, TZ).isoformat()
 
 
 def _swift_escape(s: str) -> str:
@@ -115,8 +121,15 @@ def build_findings(events):
         for _, same in by_title.items():
             if len(same) < 2:
                 continue
-            # Prefer non-local/primary calendars over local transient ones
-            keep = sorted(same, key=lambda x: (x.get("calendar", "") == "交流", x.get("calendar", "") == "日历"))[0]
+            # Prefer calendars by configurable priority / depriority
+            priority = set(CFG.get("dedup", {}).get("prefer_calendars", []))
+            depriority = set(CFG.get("dedup", {}).get("deprioritize_calendars", ["交流", "日历"]))
+
+            def sort_key(ev):
+                cal = ev.get("calendar", "")
+                return (0 if cal in priority else 1, 1 if cal in depriority else 0)
+
+            keep = sorted(same, key=sort_key)[0]
             drops = [x for x in same if x is not keep]
             if not drops:
                 continue
@@ -162,7 +175,7 @@ def main():
 
     if args.snapshot_out:
         snap = {
-            "generated_at": dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).isoformat(),
+            "generated_at": dt.datetime.now(TZ).isoformat(),
             "range": output["range"],
             "delete_targets": [
                 {"calendar": c, "title": t, "start": s, "start_iso": ts_to_iso(s)}

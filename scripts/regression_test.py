@@ -2,12 +2,14 @@
 import datetime as dt
 import json
 import subprocess
+import tempfile
 import uuid
 from pathlib import Path
 
+from config_utils import get_zoneinfo
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TZ = dt.timezone(dt.timedelta(hours=8))
+TZ = get_zoneinfo()
 
 
 def run(cmd, check=True):
@@ -43,7 +45,7 @@ def main():
         "--notes", "regression-create",
         "--alarm-minutes", "5",
     ])
-    if "CREATED" not in p1.stdout and "UPDATED" not in p1.stdout and "SKIPPED" not in p1.stdout:
+    if not any(x in p1.stdout for x in ["CREATED", "UPDATED", "SKIPPED"]):
         raise RuntimeError("unexpected upsert create output")
 
     # 2) idempotent
@@ -56,7 +58,7 @@ def main():
         "--notes", "regression-create",
         "--alarm-minutes", "5",
     ])
-    if "SKIPPED" not in p2.stdout and "UPDATED" not in p2.stdout:
+    if not any(x in p2.stdout for x in ["SKIPPED", "UPDATED"]):
         raise RuntimeError("expected SKIPPED/UPDATED in idempotent run")
 
     # 3) update
@@ -69,7 +71,7 @@ def main():
         "--notes", "regression-updated",
         "--alarm-minutes", "10",
     ])
-    if "UPDATED" not in p3.stdout and "SKIPPED" not in p3.stdout:
+    if not any(x in p3.stdout for x in ["UPDATED", "SKIPPED"]):
         raise RuntimeError("expected UPDATED/SKIPPED in update run")
 
     # 4) create a deliberate duplicate via legacy add_event
@@ -84,7 +86,7 @@ def main():
 
     range_start = iso(start - dt.timedelta(hours=1))
     range_end = iso(end + dt.timedelta(hours=2))
-    snapshot_path = SCRIPT_DIR.parent / "tmp-regression-delete-plan.json"
+    snapshot_path = Path(tempfile.gettempdir()) / f"mca-regression-delete-plan-{uuid.uuid4().hex[:6]}.json"
 
     # 5) clean dry-run should find duplicate
     c1 = run([
@@ -114,6 +116,18 @@ def main():
     cand2 = parse_candidates(c2.stdout)
     if cand2 != 0:
         raise RuntimeError(f"expected duplicate candidates 0 after cleanup, got {cand2}")
+
+    # 8) cleanup remaining test event
+    cleanup = run([
+        "python3", str(SCRIPT_DIR / "calendar_clean.py"),
+        "--start", range_start,
+        "--end", range_end,
+        "--snapshot-out", str(snapshot_path),
+    ])
+    # If no candidates, remove exact by title/start as a fallback.
+    if parse_candidates(cleanup.stdout) == 0:
+        swift_code = f'''import EventKit\nimport Foundation\nlet store = EKEventStore()\nlet fmt = ISO8601DateFormatter()\nlet sem = DispatchSemaphore(value: 0)\nstore.requestAccess(to: .event) {{ granted, _ in\n  guard granted else {{ sem.signal(); return }}\n  guard let start = fmt.date(from: "{iso(start)}") else {{ sem.signal(); return }}\n  guard let cal = store.calendars(for: .event).first(where: {{$0.title == "{cal}"}}) else {{ sem.signal(); return }}\n  let pred = store.predicateForEvents(withStart: start, end: start.addingTimeInterval(60), calendars: [cal])\n  let events = store.events(matching: pred).filter {{$0.title == "{title}"}}\n  for e in events {{ try? store.remove(e, span: .thisEvent) }}\n  sem.signal()\n}}\nsem.wait()\n'''
+        subprocess.run(["swift", "-"], input=swift_code, capture_output=True, text=True)
 
     print(json.dumps({
         "ok": True,

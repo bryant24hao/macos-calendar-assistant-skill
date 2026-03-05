@@ -7,5 +7,9 @@
   "notification": {
     "enabled": true,
     "title": "MemoryXBOT 日程提醒"
+  },
+  "dedup": {
+    "prefer_calendars": [],
+    "deprioritize_calendars": ["交流", "日历"]
   }
 }
