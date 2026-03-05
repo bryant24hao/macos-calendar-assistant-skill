@@ -2,6 +2,8 @@
 
 > I use this skill to turn weekly planning, daily execution, summary, and schedule adjustment into one continuous loop.
 
+🔗 Available on ClawHub: https://clawhub.ai/bryant24hao/macos-calendar-assistant
+
 English | [中文](#中文)
 
 ---
