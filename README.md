@@ -104,6 +104,23 @@ flowchart TD
   G --> H[Deletion result + log]
 ```
 
+## Real demos
+
+### Demo 1 — Add and edit tasks in chat
+Create a task from IM, then update duration in a follow-up message. Changes are synced to Calendar instantly.
+
+![Demo 1 - Add and edit task](./assets/demo-add-edit-task.jpg)
+
+### Demo 2 — Daily review template in Calendar
+OpenClaw + skill writes both the review time block and checklist into Calendar, making execute → review → adjust repeatable.
+
+![Demo 2 - Daily review](./assets/demo-daily-review.jpg)
+
+### Demo 3 — Weekly calendar outcome view
+A full-week view after IM-driven scheduling, rescheduling, and daily review updates via OpenClaw + skill.
+
+![Demo 3 - Weekly view](./assets/demo-weekly-view.jpg)
+
 ## Requirements
 - macOS
 - Python 3.9+
@@ -247,6 +264,23 @@ flowchart TD
   F -- 是 --> G[--apply --confirm yes]
   G --> H[输出删除结果与日志]
 ```
+
+## 真实示例图
+
+### 示例 1 — 在聊天中添加并编辑任务
+先在 IM 中创建任务，再通过后续消息修改时长，变更会即时同步到日历。
+
+![示例1-添加编辑任务](./assets/demo-add-edit-task.jpg)
+
+### 示例 2 — 每日复盘模板写入日历
+OpenClaw + skill 会把复盘时间块和复盘清单一起写入 Calendar，让执行→复盘→调整形成可持续闭环。
+
+![示例2-每日复盘](./assets/demo-daily-review.jpg)
+
+### 示例 3 — 一周结果总览
+通过 OpenClaw + skill 在 IM 中持续调度、改期与复盘后，最终形成的一周日程全貌。
+
+![示例3-一周视图](./assets/demo-weekly-view.jpg)
 
 ## 环境要求
 - macOS
