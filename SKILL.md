@@ -1,6 +1,6 @@
 ---
 name: macos-calendar-assistant
-description: Manage macOS Calendar with OpenClaw in IM-first workflows (Telegram/Discord/Feishu/iMessage/Slack), including screenshot-to-schedule extraction, idempotent create/update, move/extend/reschedule, reminders, conflict checks, daily review sync, and duplicate cleanup. Use when users ask to add/edit/move/postpone events, parse schedule screenshots/chat messages, adjust weekly plan into daily execution, or keep calendar + review notes in sync (日程/行程/会议/约会/提醒/复盘/改期/延长/截图识别).
+description: Manage macOS Calendar with OpenClaw in IM-first workflows (Telegram/Discord/Feishu/iMessage/Slack), including screenshot-to-schedule extraction, idempotent create/update, move/extend/reschedule, reminders, conflict checks, daily review sync, and duplicate cleanup. Use when users ask to add/edit/move/postpone events, parse schedule screenshots/chat messages, adjust weekly plans into daily execution, or keep calendar and review notes in sync.
 ---
 
 # macos-calendar-assistant
@@ -21,11 +21,13 @@ Use bundled scripts for reliable Calendar.app operations.
 
 ## Calendar routing defaults
 
-- 运动/跑步/训练 → `Training`
-- 工作/会议/客户 → `工作`
-- 产品/开发/MemoryX → `产品`
-- 生活/聚会/旅行 → `生活`
+- Workout / Run / Training → `Training`
+- Work / Meeting / Client → `Work`
+- Product / Development / Building → `Product`
+- Personal / Social / Travel → `Life`
 - If unspecified: prefer writable iCloud/CalDAV calendars over local calendars.
+
+> Note: Calendar names vary by user setup. Map the intent to the closest local calendar name before writing.
 
 ## Commands
 
@@ -47,7 +49,7 @@ python3 scripts/upsert_event.py \
   --title "Team sync" \
   --start "2026-03-06T19:00:00+08:00" \
   --end "2026-03-06T20:00:00+08:00" \
-  --calendar "工作" \
+  --calendar "Work" \
   --notes "Agenda" \
   --location "Online" \
   --alarm-minutes 15
@@ -68,7 +70,7 @@ python3 scripts/set_alarm.py --uid "EVENT_UID" --alarm-minutes 15
 
 ### Move event (legacy utility)
 ```bash
-swift scripts/move_event.swift "Team sync" "工作" "2026-03-07T10:00:00+08:00" 60 --search-days 7
+swift scripts/move_event.swift "Team sync" "Work" "2026-03-07T10:00:00+08:00" 60 --search-days 7
 # optional precise match:
 # --original-start "2026-03-06T10:00:00+08:00"
 ```
@@ -105,11 +107,11 @@ scripts/uninstall.sh   # remove cron
    - Treat counterpart bubbles as constraints (availability/travel window), not direct auto-create tasks.
 
 2. **Conflict policy**
-   - If user explicitly says "cover/override" (`覆盖`), allow replacing existing slot and reschedule the displaced event.
-   - If not explicit, warn and ask for choice before overwriting.
+   - If user explicitly says "override" (for example, "replace this slot"), allow replacing an existing slot and reschedule the displaced event.
+   - If not explicit, warn and ask for a choice before overwriting.
 
 3. **Time-window intent parsing**
-   - Phrases like "4-6点给对方" should first be interpreted as an availability window.
+   - Phrases like "4–6 PM for the other person" should first be interpreted as an availability window.
    - Convert to a formal event only after user confirmation.
 
 4. **Reschedule priority**

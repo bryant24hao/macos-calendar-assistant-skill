@@ -39,6 +39,9 @@
 这个 Skill 可以配合 OpenClaw 直接接入 IM（Telegram / Discord / Feishu / iMessage / Slack 等）。
 我可以在聊天里直接说“加个日程”“延长到14:00”“改到周五晚上”，不需要来回切 App。
 
+如果我的日历走的是 iCloud，同一份日程会自动在 **Mac 端 Calendar** 和 **iPhone 端 Calendar** 同步。
+这意味着我在 OpenClaw 里完成的新增/修改/调整，会同时反映到电脑端和手机端，真正做到多端一致的日程管理。
+
 ### 截图转日程（我最常用）
 我会直接转发截图（群通知、活动海报、聊天截图、预约页面等）：
 1. OpenClaw 先识别时间/地点/上下文
@@ -180,6 +183,9 @@ This creates a full loop: **plan → execute → summarize → adjust**.
 ## How I use it with IM
 This skill works with OpenClaw across IM channels (Telegram / Discord / Feishu / iMessage / Slack).
 I can say things like "add this event", "extend to 14:00", or "move to Friday night" in chat, without app switching.
+
+If my calendar is synced via iCloud, the same schedule is visible on both **Mac Calendar** and **iPhone Calendar**.
+So any event creation/update/adjustment done through OpenClaw is reflected across desktop and mobile, giving me one consistent calendar system.
 
 ### Screenshot-to-schedule (my most common pattern)
 I often forward screenshots (group notices, posters, chat screenshots, booking pages):
