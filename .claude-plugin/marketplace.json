@@ -1,0 +1,21 @@
+{
+  "name": "macos-calendar-assistant-skill",
+  "owner": {
+    "name": "bryant24hao"
+  },
+  "metadata": {
+    "description": "Manage macOS Calendar with OpenClaw in IM-first workflows — screenshot-to-schedule extraction, idempotent create/update, move/reschedule, reminders, conflict checks, daily review sync, and duplicate cleanup.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "macos-calendar-assistant",
+      "description": "macOS calendar assistant for IM-first schedule management including planning, execution, review, and safe dedup cleanup via EventKit",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./"
+      ]
+    }
+  ]
+}
